@@ -21,27 +21,30 @@ if (! isset( $push ) ) {
 $cache = $push->cache();
 $data  = $push->data();
 
+// The three following if-statements are basically a first-run script
 if (! file_exists($cache) ) {
 	mkdir($cache);
 }
-
 if (! file_exists($data) ) {
 	mkdir($data);
 }
-
 if (! file_exists($data . "/settings.json")) {
-
-} else {
-	$tmp 	= json_decode(file_get_contents( $data . "/settings.json" ), TRUE);
-	$user 	= $tmp['user'];
-	$key 	= $tmp['key'];
-	unset($tmp);
+	exec('osascript settings.scpt');
 }
 
+$data = '/Users/Sven/Library/Application Support/Alfred 2/Workflow Data/com.push.workflow.update.packal';
 
+$json = file_get_contents( $data . "/settings.json" );
+$tmp 	= json_decode($json, TRUE);
+// The Workflow author's Packal username.
+$user 	= trim($tmp['username']);
+// The Packal API Key.
+$key 	= trim($tmp['key']);
+// The name that the Workflow author puts into the "Created By" field in the workflow.
+$name   = trim($tmp['name']);
+unset($tmp);
 
-$workflow_directory = realpath(dirname(__DIR__));
-$workflows = scandir($workflow_directory);
+$workflows = scandir(realpath(dirname(__DIR__)));
 
 // Ignore these files
 $ignore = array('.' , '..' , '.DS_Store');
@@ -68,8 +71,14 @@ if (PHP_MINOR_VERSION >= 4) {
 	ksort($w , SORT_NATURAL );
 }
 
+foreach ($w as $workflow) {
+	// Cut out anything that doesn't match the user
+	if ($workflow['createdby'] == $name) {
+		$push->result($workflow['bundleid'], $workflow[$workflow['name']]['directory'], $workflow['name'], $workflow['createdby'], '', 'yes', 'autocomplete');
+	}
+}
 
-
+echo $push->toxml();
 
 function readPlist($plist) {
 	if (! file_exists($plist) ) {
