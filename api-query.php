@@ -5,10 +5,11 @@
  * @param  string $username The Packal Username
  * @param  string $key      The API Key
  * @param  string $bundle   The BundleID
- * @param  file   $workflow The workflow file
+ * @param  file   $workflow The workflow file path... !!!FULL PATH!!!
  * @return array           	An array of headers, errors, and content response
  */
 function curl_request( $username, $key, $bundle, $workflow) {
+	
 	// Create the curl object at our endpoint
 	$ch = curl_init("https://apidev.packal.org");
 
@@ -22,23 +23,45 @@ function curl_request( $username, $key, $bundle, $workflow) {
 				CURLOPT_POST => true,
 				CURLOPT_FOLLOWLOCATION => true,
 				CURLOPT_USERAGENT => "push-update-workflow-packal",
-				CURLOPT_AUTOREFERER => true
+				CURLOPT_AUTOREFERER => true,
+				CURLOPT_VERBOSE => true,
+				CURLOPT_TIMEOUT => 90,
+				CURLOPT_RETURNTRANSFER => true,
+
+
+
 				);
+
 
 
 
 	// Look into CURLOPT_PROGRESSFUNCTION for possible notifications.
 
-	// Package the workflow file as a curl file
-	$file = curl_file_create($workflow, 'application/zip');
-
 	// Create post fields
 	$data = array(
-			'workflow' => $file,
+			// This is a full path to a file, denoted by the @
+			'workflow' => "@$workflow",
 			'username' => $username,
 			'key'      => $key,
 			'bundle'   => $bundle
 			);
+
+	/**
+	 *
+	 * I'm not positive that the above way to send the file will work.
+	 * If it doesn't, here is another method.
+	 *
+	 * $file = file_get_contents($workflow);
+	 * $size = filesize($workflow);
+	 *
+	 * curl_setopt($ch, CURLOPT_INFILE, $file);
+	 * curl_setopt($ch, CURLOPT_INFILESIZE, $size);
+	 * 
+	 * replace the appropriate line in the $data array:
+	 * 	'workflow' => $file,
+	 * 
+	 */
+
 
 	// Set the options
 	curl_setopt_array ( $ch, $options );
